@@ -4,6 +4,7 @@ import { useRef, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Sphere, MeshDistortMaterial } from "@react-three/drei";
 import { motion } from "framer-motion";
+import * as THREE from "three";
 
 const AnimatedSphere = ({
   position,
