@@ -32,6 +32,8 @@ export async function POST(req: Request) {
       - Use natural speech patterns and transitions
       - Separate paragraphs with simple line breaks
       - DO NOT include any timestamps or speaker names
+      - DO NOT include prefixes like "Here's the podcast script on..." or "Here is a script about..."
+      - Start directly with the script content itself
       - Only return the script content, no additional commentary
       - Avoid phrases like "Welcome to this episode" or "In this podcast" - just speak naturally about the topic
     `;
@@ -41,7 +43,7 @@ export async function POST(req: Request) {
         {
           role: "system",
           content:
-            "You are an expert podcast script writer who creates engaging, well-structured scripts on any topic. Your scripts are written in a natural, conversational tone without any formatting symbols or markdown. You write as people actually speak, with natural flow, pauses, and transitions. Your content is meant to be read aloud, so you avoid any visual formatting that would sound strange when spoken.",
+            "You are an expert podcast script writer who creates engaging, well-structured scripts on any topic. Your scripts are written in a natural, conversational tone without any formatting symbols or markdown. You write as people actually speak, with natural flow, pauses, and transitions. Your content is meant to be read aloud, so you avoid any visual formatting that would sound strange when spoken. IMPORTANT: Do not include prefixes like 'Here's the podcast script on...' or 'Here is a script about...'. Start directly with the script content itself.",
         },
         {
           role: "user",
@@ -70,6 +72,12 @@ export async function POST(req: Request) {
 
 // Function to clean up any markdown or formatting from the script
 function cleanupScript(script: string): string {
+  // Remove common LLM response prefixes like "Here's the podcast script on..."
+  script = script.replace(
+    /^(Here['']s |Here is )?(the |a )?(podcast script|script for a podcast|transcript)( about| on| for)? .*?[:.]/i,
+    ""
+  );
+
   // Remove markdown headers (# Header)
   script = script.replace(/^#+\s+(.*)$/gm, "$1");
 
@@ -95,6 +103,9 @@ function cleanupScript(script: string): string {
 
   // Ensure proper spacing after periods
   script = script.replace(/\.(?=[A-Za-z])/g, ". ");
+
+  // Trim any leading/trailing whitespace
+  script = script.trim();
 
   return script;
 }
