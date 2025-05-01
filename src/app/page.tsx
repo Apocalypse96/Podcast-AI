@@ -1,103 +1,232 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from "react";
+import { PodcastFormData, PodcastState } from "@/types";
+import { Toaster, toast } from "sonner";
+import { motion } from "framer-motion";
+
+// Animated Components
+import AnimatedPodcastForm from "@/components/AnimatedPodcastForm";
+import AnimatedScriptDisplay from "@/components/AnimatedScriptDisplay";
+import AnimatedBackground from "@/components/AnimatedBackground";
+import FloatingParticles from "@/components/FloatingParticles";
+import AnimatedLogo from "@/components/AnimatedLogo";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [podcastState, setPodcastState] = useState<PodcastState>({
+    script: null,
+    audioUrl: null,
+    isGeneratingScript: false,
+    isGeneratingAudio: false,
+    error: null,
+  });
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const handleFormSubmit = async (data: PodcastFormData) => {
+    try {
+      setPodcastState((prev) => ({
+        ...prev,
+        isGeneratingScript: true,
+        script: null,
+        audioUrl: null,
+        error: null,
+      }));
+
+      const response = await fetch("/api/generate-script", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to generate script");
+      }
+
+      const { script } = await response.json();
+
+      setPodcastState((prev) => ({
+        ...prev,
+        script,
+        isGeneratingScript: false,
+      }));
+
+      toast.success("Script generated successfully!");
+    } catch (error) {
+      console.error("Error:", error);
+      setPodcastState((prev) => ({
+        ...prev,
+        isGeneratingScript: false,
+        error:
+          error instanceof Error ? error.message : "An unknown error occurred",
+      }));
+      toast.error("Failed to generate script");
+    }
+  };
+
+  const handleGenerateAudio = async () => {
+    if (!podcastState.script) return;
+
+    try {
+      setPodcastState((prev) => ({
+        ...prev,
+        isGeneratingAudio: true,
+        error: null,
+      }));
+
+      const response = await fetch("/api/text-to-speech", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: podcastState.script }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to generate audio");
+      }
+
+      const { audio, format } = await response.json();
+
+      // Convert base64 to blob URL
+      const audioBlob = base64ToBlob(audio, `audio/${format}`);
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      setPodcastState((prev) => ({
+        ...prev,
+        audioUrl,
+        isGeneratingAudio: false,
+      }));
+
+      toast.success("Audio generated successfully!");
+    } catch (error) {
+      console.error("Error:", error);
+      setPodcastState((prev) => ({
+        ...prev,
+        isGeneratingAudio: false,
+        error:
+          error instanceof Error ? error.message : "An unknown error occurred",
+      }));
+      toast.error("Failed to generate audio");
+    }
+  };
+
+  // Helper function to convert base64 to Blob
+  const base64ToBlob = (base64: string, mimeType: string) => {
+    const byteCharacters = atob(base64);
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+      const slice = byteCharacters.slice(offset, offset + 512);
+      const byteNumbers = new Array(slice.length);
+
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
+    }
+
+    return new Blob(byteArrays, { type: mimeType });
+  };
+
+  // Page transition animation
+  const pageVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.8,
+        ease: "easeInOut",
+      },
+    },
+  };
+
+  // Loading state for initial animations
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    // Set loaded after a short delay to allow animations to start
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={pageVariants}
+      className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white overflow-hidden relative"
+    >
+      {/* Background elements - positioned with lower z-index */}
+      <AnimatedBackground />
+      <FloatingParticles />
+
+      {/* Toast notifications */}
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          style: {
+            background: "rgba(0, 0, 0, 0.8)",
+            color: "#fff",
+            border: "1px solid rgba(139, 92, 246, 0.3)",
+            backdropFilter: "blur(10px)",
+            zIndex: 100,
+          },
+        }}
+      />
+
+      {/* Main content container with higher z-index */}
+      <div className="container mx-auto px-4 py-12 relative z-30">
+        {/* Animated Logo */}
+        <AnimatedLogo />
+
+        {/* Content wrapper with spacing to allow background elements to be visible */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isLoaded ? 1 : 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="relative z-30 mt-8"
+        >
+          {/* Form with proper spacing and z-index */}
+          <div className="relative mb-20">
+            <AnimatedPodcastForm
+              onSubmit={handleFormSubmit}
+              isLoading={podcastState.isGeneratingScript}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          </div>
+
+          {/* Error message */}
+          {podcastState.error && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="mt-16 mb-16 p-4 bg-red-900/50 backdrop-blur-md border border-red-700 rounded-lg text-white max-w-2xl mx-auto relative z-30"
+            >
+              <p className="font-medium">Error: {podcastState.error}</p>
+            </motion.div>
+          )}
+
+          {/* Script display with proper spacing */}
+          {podcastState.script && (
+            <div className="mt-20 relative z-30">
+              <AnimatedScriptDisplay
+                script={podcastState.script}
+                audioUrl={podcastState.audioUrl}
+                isGeneratingAudio={podcastState.isGeneratingAudio}
+                onGenerateAudio={handleGenerateAudio}
+              />
+            </div>
+          )}
+        </motion.div>
+      </div>
+    </motion.div>
   );
 }

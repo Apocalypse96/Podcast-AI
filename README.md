@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Podcast AI
+
+Podcast AI is a web application that generates podcast scripts and converts them to lifelike audio using AI. It uses Groq API for script generation and Eleven Labs for text-to-speech conversion.
+
+## Features
+
+- Generate podcast scripts on any topic
+- Convert scripts to lifelike audio
+- Sleek, futuristic UI
+- No backend required - uses API calls directly from the frontend
+
+## Technologies Used
+
+- **Frontend**: Next.js 15, React, TypeScript, Tailwind CSS
+- **AI Services**:
+  - Groq API for script generation
+  - Eleven Labs for text-to-speech conversion
+- **Other Libraries**:
+  - React Icons for UI icons
+  - Sonner for toast notifications
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js (v18 or higher)
+- npm or yarn
+- Groq API key
+- Eleven Labs API key
+
+### Installation
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/yourusername/podcast-ai.git
+   cd podcast-ai
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Create a `.env.local` file in the root directory with your API keys:
+
+   ```
+   GROQ_API_KEY=your-groq-api-key
+   ELEVENLABS_API_KEY=your-elevenlabs-api-key
+   GROQ_MODEL=llama3-70b-8192
+   ELEVENLABS_VOICE_ID=21m00Tcm4TlvDq8ikWAM
+   ```
+
+4. Start the development server:
+
+   ```bash
+   npm run dev
+   ```
+
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Usage
+
+1. Enter a podcast topic in the form
+2. Add any additional information or context (optional)
+3. Click "Generate Podcast" to create a script
+4. Once the script is generated, click "Generate Audio" to convert it to speech
+5. Use the audio player to listen to your podcast or download it
+
+## Deployment
+
+This application can be easily deployed to Vercel:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install -g vercel
+vercel
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## License
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Acknowledgements
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Groq](https://groq.com/) for providing the AI script generation API
+- [Eleven Labs](https://elevenlabs.io/) for the text-to-speech API
+- [Next.js](https://nextjs.org/) for the React framework
+- [Tailwind CSS](https://tailwindcss.com/) for styling
